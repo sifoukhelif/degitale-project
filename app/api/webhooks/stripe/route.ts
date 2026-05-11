@@ -10,8 +10,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { createAdminClient } from '@/lib/admin'
-import { sendOrderEmails } from '@/lib/sendOrderEmails'
+import { createAdminClient } from '../../../../lib/supabase/admin'
+import { sendOrderEmails } from '../../../../lib/email/sendOrderEmails'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-04-10' })
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET!
