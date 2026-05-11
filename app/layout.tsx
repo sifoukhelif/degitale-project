@@ -1,74 +1,26 @@
-// app/layout.tsx  — Root layout (server component)
-// Handles: i18n direction, font loading, responsive shell, global providers
+import { Playfair_Display, DM_Sans } from 'next/font/google'
 
-import { ThemeProvider } from '../components/providers/ThemeProvider'
-import { SupabaseProvider } from '../components/providers/SupabaseProvider'
-import { I18nProvider } from '../components/providers/I18nProvider'
-import { Toaster } from '../components/Toaster'
-import '@/styles/globals.css'
-
-// ─── Fonts (subset-loaded, zero layout shift) ─────────────────────────────
+// 1. تعريف الخطوط خارج المكون (خارج الـ function)
 const playfair = Playfair_Display({
   subsets: ['latin'],
-  variable: '--font-display',
-  display: 'swap',
+  variable: '--font-playfair',
 })
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
-  variable: '--font-body',
-  weight: ['300', '400', '500', '600'],
-  display: 'swap',
+  variable: '--font-sans',
 })
 
-// ─── SEO metadata ─────────────────────────────────────────────────────────
-export const metadata: Metadata = {
-  title: { default: 'DEGITALE — Premium Digital Marketplace', template: '%s | DEGITALE' },
-  description: 'Buy and sell premium digital products, templates, and services.',
-  metadataBase: new URL('https://degitale.com'),
-  openGraph: {
-    siteName: 'DEGITALE',
-    type: 'website',
-    locale: 'en_US',
-  },
-  robots: { index: true, follow: true },
-  icons: { icon: '/icons/favicon.svg', apple: '/icons/apple-touch-icon.png' },
-}
-
-// Viewport separated (Next.js 14+ requirement)
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  themeColor: '#08080E',
-}
-
-// ─── Root Layout ──────────────────────────────────────────────────────────
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  // Read locale injected by middleware (no DB round-trip)
-  const headersList = headers()
-  const locale = (headersList.get('x-degitale-locale') ?? 'en') as 'en' | 'ar' | 'fr'
-  const dir = locale === 'ar' ? 'rtl' : 'ltr'
-
   return (
-    <html
-      lang={locale}
-      dir={dir}
-      className={`${playfair.variable} ${dmSans.variable}`}
-      suppressHydrationWarning
-    >
-      <body>
-        <SupabaseProvider>
-          <I18nProvider locale={locale}>
-            <ThemeProvider>
-              {children}
-              <Toaster />
-            </ThemeProvider>
-          </I18nProvider>
-        </SupabaseProvider>
+    <html lang="ar" dir="rtl" suppressHydrationWarning>
+      {/* 2. إضافة الخطوط إلى الكلاس الخاص بالـ body */}
+      <body className={`${playfair.variable} ${dmSans.variable} font-sans`}>
+        {children}
       </body>
     </html>
   )
