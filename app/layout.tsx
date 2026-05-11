@@ -1,9 +1,9 @@
 // app/layout.tsx  — Root layout (server component)
 // Handles: i18n direction, font loading, responsive shell, global providers
 
-import type { Metadata, Viewport } from 'next'
-import { headers } from 'next/headers'
-import { Playfair_Display, DM_Sans } from 'next/font/google'
+import { ThemeProvider } from '../components/providers/ThemeProvider'
+import { SupabaseProvider } from '../components/providers/SupabaseProvider'
+import { I18nProvider } from '../components/providers/I18nProvider'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { SupabaseProvider } from '../components/SupabaseProvider'
 import { I18nProvider } from '../components/I18nProvider'
