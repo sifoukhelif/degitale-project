@@ -1,6 +1,18 @@
 'use client'
-import { createContext } from 'react'
+
+import { createContext, useContext } from 'react'
+
 const Context = createContext<any>(undefined)
-export default function I18nProvider({ children }: { children: React.ReactNode }) {
-  return <Context.Provider value={{}}>{children}</Context.Provider>
+
+export function I18nProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <Context.Provider value={{}}>
+      {children}
+    </Context.Provider>
+  )
+}
+
+export const useI18n = () => {
+  const context = useContext(Context)
+  return context
 }
