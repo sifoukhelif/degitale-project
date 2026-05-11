@@ -7,8 +7,7 @@
 // Both emails are sent in parallel — failure of one doesn't block the other.
 
 import { Resend } from 'resend'
-import { BuyerReceiptEmail } from './templates/BuyerReceiptEmail'
-import { SellerSaleEmail } from './templates/SellerSaleEmail'
+
 
 const resend = new Resend(process.env.RESEND_API_KEY!)
 const FROM   = 'DEGITALE <orders@degitale.com>'
