@@ -1,11 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
-    // سيقوم بتجاهل أخطاء الـ Types أثناء البناء لضمان نجاح الرفع
+    // يتجاهل أخطاء الـ Types لضمان نجاح الرفع الآن
     ignoreBuildErrors: true,
   },
   eslint: {
-    // سيقوم بتجاهل أخطاء التنسيق (Linting) أثناء البناء
+    // يتجاهل أخطاء التنسيق (Lint) أثناء البناء
     ignoreDuringBuilds: true,
   },
 };
