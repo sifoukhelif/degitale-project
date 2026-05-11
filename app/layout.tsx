@@ -4,7 +4,7 @@
 import { ThemeProvider } from '../components/providers/ThemeProvider'
 import { SupabaseProvider } from '../components/providers/SupabaseProvider'
 import { I18nProvider } from '../components/providers/I18nProvider'
-import { Toaster } from '../components/ui/Toaster'
+import { Toaster } from '../components/Toaster'
 import '@/styles/globals.css'
 
 // ─── Fonts (subset-loaded, zero layout shift) ─────────────────────────────
