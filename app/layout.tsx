@@ -4,9 +4,9 @@
 import { ThemeProvider } from '../components/providers/ThemeProvider'
 import { SupabaseProvider } from '../components/providers/SupabaseProvider'
 import { I18nProvider } from '../components/providers/I18nProvider'
-import { ThemeProvider } from '@/components/ThemeProvider'
-import { SupabaseProvider } from '../components/SupabaseProvider'
-import { I18nProvider } from '../components/I18nProvider'
+import { ThemeProvider } from '../components/providers/ThemeProvider'
+import { SupabaseProvider } from '../components/providers/SupabaseProvider'
+import { I18nProvider } from '../components/providers/I18nProvider'
 import { Toaster } from '@/components/ui/Toaster'
 import '@/styles/globals.css'
 
