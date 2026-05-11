@@ -8,7 +8,7 @@
 
 import { Resend } from 'resend'
 import { BuyerReceiptEmail } from './templates/BuyerReceiptEmail'
-import { SellerSaleEmail }   from './templates/SellerSaleEmail'
+import { SellerSaleEmail } from './templates/SellerSaleEmail'
 
 const resend = new Resend(process.env.RESEND_API_KEY!)
 const FROM   = 'DEGITALE <orders@degitale.com>'
