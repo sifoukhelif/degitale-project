@@ -2,7 +2,7 @@ import { Playfair_Display, DM_Sans } from 'next/font/google'
 import { ThemeProvider } from '../components/providers/ThemeProvider'
 import { SupabaseProvider } from '../components/providers/SupabaseProvider'
 import { I18nProvider } from '../components/providers/I18nProvider'
-import { Toaster } from '../components/ui/Toaster'
+import { Toaster } from '../components/Toaster'
 import '@/styles/globals.css'
 
 const playfair = Playfair_Display({
