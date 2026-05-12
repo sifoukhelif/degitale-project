@@ -100,7 +100,7 @@ const supabase = await createServerClient()
 // ── generateStaticParams (optional ISR) ─────────────────────────────────────
 // Pre-renders the top 200 products at build time; the rest are SSR on demand.
 export async function generateStaticParams() {
-  const supabase = createServerClient()
+const supabase = await createServerClient()
   const { data } = await supabase
     .from('listings')
     .select('slug')
@@ -113,7 +113,7 @@ export async function generateStaticParams() {
 
 // ── Page component (abbreviated) ─────────────────────────────────────────────
 export default async function ProductPage({ params }: { params: { slug: string } }) {
-  const supabase = createServerClient()
+  const supabase = await createServerClient() 
   const { data: listing } = await supabase
     .from('listings')
     .select('*')
