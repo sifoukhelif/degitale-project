@@ -17,7 +17,7 @@ export async function generateMetadata({
 }: {
   params: { slug: string }
 }): Promise<Metadata> {
-  const supabase = createServerClient()
+const supabase = await createServerClient()
 
   const { data: listing } = await supabase
     .from('listings')
