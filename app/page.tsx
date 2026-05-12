@@ -117,4 +117,12 @@ export default async function Home() {
           </div>
           
           <div className="flex gap-10 text-sm text-gray-500 order-1 md:order-2">
-            <Link href="/terms" className="hover
+            <Link href="/terms" className="hover:text-[#C9A84C] transition-colors">الشروط والأحكام</Link>
+            <Link href="/privacy" className="hover:text-[#C9A84C] transition-colors">سياسة الخصوصية</Link>
+            <Link href="/contact" className="hover:text-[#C9A84C] transition-colors">اتصل بنا</Link>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
