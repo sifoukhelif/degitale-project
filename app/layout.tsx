@@ -1,6 +1,20 @@
-import { Playfair_Display, DM_Sans, Cairo } from 'next/font/google' // أضف Cairo هنا
+import { Playfair_Display, DM_Sans, Cairo } from 'next/font/google'
+import { ThemeProvider } from '../components/providers/ThemeProvider'
+import { SupabaseProvider } from '../components/providers/SupabaseProvider'
+import { I18nProvider } from '../components/providers/I18nProvider'
+import { Toaster } from '../components/Toaster'
+import '@/styles/globals.css'
 
-// ... الإعدادات الأخرى
+// 1. تعريف الخطوط كمغيرات برمجية (هذا ما كان ينقصك)
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-playfair',
+})
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  variable: '--font-sans',
+})
 
 const cairo = Cairo({
   subsets: ['arabic'],
@@ -14,7 +28,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
-      {/* أضف cairo.variable هنا واجعل font-cairo هو الخط الأساسي */}
+      {/* 2. دمج المتغيرات الثلاثة في الـ body مع جعل Cairo هو الخط الأساسي */}
       <body className={`${playfair.variable} ${dmSans.variable} ${cairo.variable} font-cairo antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <SupabaseProvider>
