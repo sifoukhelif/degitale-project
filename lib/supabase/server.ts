@@ -2,8 +2,20 @@ import { createServerClient as supabaseCreateServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export const createServerClient = async () => {
-  // جلب مخزن الكوكيز بشكل غير متزامن
-  const cookieStore = await cookies()
+  // فحص ما إذا كنا في مرحلة البناء (Static Generation)
+  // إذا كنا كذلك، سننشئ عميلاً بسيطاً بدون كوكيز لتجنب الانهيار
+  
+  let cookieStore;
+  try {
+    cookieStore = await cookies();
+  } catch (e) {
+    // نحن غالباً في مرحلة Build Time
+    return supabaseCreateServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { cookies: {} }
+    );
+  }
 
   return supabaseCreateServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,16 +28,12 @@ export const createServerClient = async () => {
         set(name: string, value: string, options: any) {
           try {
             cookieStore.set({ name, value, ...options })
-          } catch (error) {
-            // تجاهل الخطأ إذا تم استدعاؤه في Server Component
-          }
+          } catch (error) {}
         },
         remove(name: string, options: any) {
           try {
             cookieStore.set({ name, value: '', ...options })
-          } catch (error) {
-            // تجاهل الخطأ إذا تم استدعاؤه في Server Component
-          }
+          } catch (error) {}
         },
       },
     }
