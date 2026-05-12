@@ -7,10 +7,9 @@ import { createServerClient } from '@/lib/supabase/server';
  */
 
 export default async function Home() {
-  // 1. استدعاء عميل سوبابيس (Server Component)
   const supabase = await createServerClient();
   
-  // 2. جلب آخر 4 منتجات نشطة من قاعدة البيانات
+  // جلب آخر 4 منتجات نشطة
   const { data: featuredProducts } = await supabase
     .from('listings')
     .select('*, stores(name)')
@@ -24,8 +23,6 @@ export default async function Home() {
       {/* ── شريط التنقل (Navigation Bar) ────────────────────────────────────────── */}
       <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#08080E]/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          
-          {/* الشعار (Logo) */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-[#C9A84C] rounded-xl flex items-center justify-center text-[#08080E] font-black italic text-xl shadow-[0_0_15px_rgba(201,168,76,0.3)]">
               D
@@ -33,25 +30,20 @@ export default async function Home() {
             <span className="text-2xl font-bold tracking-tighter uppercase hidden sm:block">Degitale</span>
           </div>
 
-          {/* الروابط المركزية (Center Links) */}
           <div className="hidden md:flex gap-10 text-sm font-medium text-gray-400">
             <Link href="/shop" className="hover:text-[#C9A84C] transition-all">المتجر</Link>
             <Link href="/categories" className="hover:text-[#C9A84C] transition-all">التصنيفات</Link>
             <Link href="/sell" className="hover:text-[#C9A84C] transition-all">ابدأ البيع</Link>
           </div>
 
-          {/* أزرار العمليات (Actions) */}
-          <div className="flex items-center gap-4">
-            <Link href="/login" className="bg-white/5 border border-white/10 px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-[#C9A84C] hover:text-black transition-all">
-              دخول
-            </Link>
-          </div>
+          <Link href="/login" className="bg-white/5 border border-white/10 px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-[#C9A84C] hover:text-black transition-all">
+            دخول
+          </Link>
         </div>
       </nav>
 
       {/* ── قسم الهيرو (Hero Section) ───────────────────────────────────────────── */}
       <section className="relative pt-52 pb-32 overflow-hidden flex flex-col items-center">
-        {/* تأثير الإضاءة الذهبية المتمركز في المنتصف */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[700px] bg-[#C9A84C]/10 blur-[130px] rounded-full -z-10" />
         
         <div className="max-w-5xl mx-auto px-6 flex flex-col items-center text-center relative z-10">
@@ -61,7 +53,7 @@ export default async function Home() {
           
           <h1 className="text-6xl md:text-8xl font-serif font-bold mb-10 leading-[1.1] text-white">
             امتلك أفضل <br /> 
-            <span className="text-[#C9A84C] italic decoration-wavy">الأصول الرقمية</span>
+            <span className="text-[#C9A84C] italic">الأصول الرقمية</span>
           </h1>
 
           <p className="max-w-2xl text-gray-400 text-lg md:text-xl mb-14 leading-relaxed font-light">
@@ -91,4 +83,57 @@ export default async function Home() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-
+        {/* السطر 94 الذي حدث فيه الخطأ تم إصلاحه هنا */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {featuredProducts && featuredProducts.length > 0 ? (
+            featuredProducts.map((product) => (
+              <Link key={product.id} href={`/product/${product.slug}`} className="group">
+                <div className="relative aspect-[4/5] rounded-[2.5rem] overflow-hidden bg-[#12121A] border border-white/5 group-hover:border-[#C9A84C]/40 transition-all duration-700 shadow-2xl">
+                  <img 
+                    src={product.thumbnail_url || '/placeholder.png'} 
+                    className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-1000"
+                    alt={product.title}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#08080E] via-[#08080E]/40 to-transparent opacity-90" />
+                  <div className="absolute bottom-10 left-8 right-8 text-right translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                    <div className="text-[10px] text-[#C9A84C] font-black uppercase mb-2 tracking-widest opacity-80">
+                      {(product.stores as any)?.name ?? 'Degitale Exclusive'}
+                    </div>
+                    <h3 className="text-xl font-bold leading-tight mb-4 group-hover:text-[#C9A84C] transition-colors line-clamp-2">
+                      {product.title}
+                    </h3>
+                    <div className="text-2xl font-serif font-black text-white">
+                      ${product.base_price?.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))
+          ) : (
+            [1,2,3,4].map((i) => (
+              <div key={i} className="aspect-[4/5] rounded-[2.5rem] bg-white/5 border border-white/5 animate-pulse" />
+            ))
+          )}
+        </div>
+      </section>
+
+      {/* ── التذييل (Footer) ─────────────────────────────────────────────────── */}
+      <footer className="border-t border-white/5 py-24 bg-[#06060A]">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12">
+          <div className="flex flex-col md:flex-row items-center gap-6 order-2 md:order-1">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-white/10 rounded flex items-center justify-center text-[10px] font-bold">D</div>
+              <span className="font-bold text-white tracking-widest uppercase text-sm">Degitale</span>
+            </div>
+            <span className="text-xs text-gray-600 font-medium">© 2026 جميع الحقوق محفوظة لمنصة ديجيتال</span>
+          </div>
+          <div className="flex gap-10 text-xs font-bold text-gray-500 order-1 md:order-2 uppercase tracking-widest">
+            <Link href="/terms" className="hover:text-[#C9A84C] transition-colors">الشروط</Link>
+            <Link href="/privacy" className="hover:text-[#C9A84C] transition-colors">الخصوصية</Link>
+            <Link href="/contact" className="hover:text-[#C9A84C] transition-colors">الدعم</Link>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
