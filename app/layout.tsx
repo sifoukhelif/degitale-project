@@ -1,6 +1,10 @@
 import { Playfair_Display, DM_Sans } from 'next/font/google'
+import { ThemeProvider } from '../components/providers/ThemeProvider'
+import { SupabaseProvider } from '../components/providers/SupabaseProvider'
+import { I18nProvider } from '../components/providers/I18nProvider'
+import { Toaster } from '../components/ui/Toaster'
+import '@/styles/globals.css'
 
-// 1. تعريف الخطوط خارج المكون (خارج الـ function)
 const playfair = Playfair_Display({
   subsets: ['latin'],
   variable: '--font-playfair',
@@ -18,9 +22,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
-      {/* 2. إضافة الخطوط إلى الكلاس الخاص بالـ body */}
-      <body className={`${playfair.variable} ${dmSans.variable} font-sans`}>
-        {children}
+      <body className={`${playfair.variable} ${dmSans.variable} font-sans antialiased`}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <SupabaseProvider>
+            <I18nProvider>
+              {children}
+              <Toaster />
+            </I18nProvider>
+          </SupabaseProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
