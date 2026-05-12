@@ -1,18 +1,10 @@
-import { Playfair_Display, DM_Sans } from 'next/font/google'
-import { ThemeProvider } from '../components/providers/ThemeProvider'
-import { SupabaseProvider } from '../components/providers/SupabaseProvider'
-import { I18nProvider } from '../components/providers/I18nProvider'
-import { Toaster } from '../components/Toaster'
-import '@/styles/globals.css'
+import { Playfair_Display, DM_Sans, Cairo } from 'next/font/google' // أضف Cairo هنا
 
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  variable: '--font-playfair',
-})
+// ... الإعدادات الأخرى
 
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  variable: '--font-sans',
+const cairo = Cairo({
+  subsets: ['arabic'],
+  variable: '--font-cairo',
 })
 
 export default function RootLayout({
@@ -22,7 +14,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
-      <body className={`${playfair.variable} ${dmSans.variable} font-sans antialiased`}>
+      {/* أضف cairo.variable هنا واجعل font-cairo هو الخط الأساسي */}
+      <body className={`${playfair.variable} ${dmSans.variable} ${cairo.variable} font-cairo antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <SupabaseProvider>
             <I18nProvider>
