@@ -2,38 +2,26 @@ import { createServerClient as supabaseCreateServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export const createServerClient = async () => {
-  // فحص ما إذا كنا في مرحلة البناء (Static Generation)
-  // إذا كنا كذلك، سننشئ عميلاً بسيطاً بدون كوكيز لتجنب الانهيار
-  
-  let cookieStore;
-  try {
-    cookieStore = await cookies();
-  } catch (e) {
-    // نحن غالباً في مرحلة Build Time
-    return supabaseCreateServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { cookies: {} }
-    );
-  }
+  const cookieStore = await cookies()
 
   return supabaseCreateServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
+        // الطريقة الجديدة والمطلوبة في Next.js 16
+        getAll() {
+          return cookieStore.getAll()
         },
-        set(name: string, value: string, options: any) {
+        setAll(cookiesToSet) {
           try {
-            cookieStore.set({ name, value, ...options })
-          } catch (error) {}
-        },
-        remove(name: string, options: any) {
-          try {
-            cookieStore.set({ name, value: '', ...options })
-          } catch (error) {}
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
+          } catch {
+            // تجاهل الخطأ أثناء عمل Prerendering/Static Generation
+            // لأن الكوكيز لا يمكن تعديلها في مرحلة البناء
+          }
         },
       },
     }
