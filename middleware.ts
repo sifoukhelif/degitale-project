@@ -1,118 +1,66 @@
-// middleware.ts  (root of Next.js project)
-// Runs on the Edge — zero cold-start, executed before every matched request.
+// next.config.js — مُصلح لـ Next.js 16
+/** @type {import('next').NextConfig} */
+const nextConfig = {
 
-import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-
-// ─── Route permission matrix ───────────────────────────────────────────────
-const ROUTE_RULES: {
-  pattern: RegExp
-  roles: Array<'buyer' | 'seller' | 'admin'>
-  requireAuth: boolean
-}[] = [
-  // Public routes — no auth needed
-  { pattern: /^\/$/, roles: [], requireAuth: false },
-  { pattern: /^\/browse/, roles: [], requireAuth: false },
-  { pattern: /^\/product\//, roles: [], requireAuth: false },
-  { pattern: /^\/store\//, roles: [], requireAuth: false },
-  { pattern: /^\/auth\//, roles: [], requireAuth: false },
-
-  // Buyer-only routes
-  { pattern: /^\/orders/, roles: ['buyer', 'seller', 'admin'], requireAuth: true },
-  { pattern: /^\/downloads/, roles: ['buyer', 'seller', 'admin'], requireAuth: true },
-  { pattern: /^\/checkout/, roles: ['buyer', 'seller', 'admin'], requireAuth: true },
-
-  // Seller + Admin routes (vendor dashboard)
-  { pattern: /^\/dashboard/, roles: ['seller', 'admin'], requireAuth: true },
-  { pattern: /^\/dashboard\/products/, roles: ['seller', 'admin'], requireAuth: true },
-  { pattern: /^\/dashboard\/orders/, roles: ['seller', 'admin'], requireAuth: true },
-  { pattern: /^\/dashboard\/wallet/, roles: ['seller', 'admin'], requireAuth: true },
-  { pattern: /^\/dashboard\/analytics/, roles: ['seller', 'admin'], requireAuth: true },
-  { pattern: /^\/dashboard\/milestones/, roles: ['seller', 'admin'], requireAuth: true },
-
-  // Admin-only routes
-  { pattern: /^\/admin/, roles: ['admin'], requireAuth: true },
-]
-
-// ─── Middleware ────────────────────────────────────────────────────────────
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-
-  // 1. Find matching rule (first match wins)
-  const rule = ROUTE_RULES.find(r => r.pattern.test(pathname))
-
-  // No rule → allow (static assets, API routes handled separately)
-  if (!rule || !rule.requireAuth) return NextResponse.next()
-
-  // 2. Initialise Supabase SSR client (reads cookies from request)
-  let response = NextResponse.next({
-    request: { headers: request.headers },
-  })
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get: (name) => request.cookies.get(name)?.value,
-        set: (name, value, opts) => {
-          request.cookies.set({ name, value, ...opts })
-          response.cookies.set({ name, value, ...opts })
-        },
-        remove: (name, opts) => {
-          request.cookies.set({ name, value: '', ...opts })
-          response.cookies.set({ name, value: '', ...opts })
-        },
+  // ── Images ───────────────────────────────────────────────────────────────
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        pathname: '/storage/v1/object/public/**',
       },
-    }
-  )
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        pathname: '/storage/v1/render/image/**',
+      },
+    ],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+  },
 
-  // 3. Get session — lightweight (reads JWT from cookie, no DB call)
-  const { data: { session } } = await supabase.auth.getSession()
+  // ── Security headers ─────────────────────────────────────────────────────
+  async headers() {
+    const securityHeaders = [
+      { key: 'X-DNS-Prefetch-Control',   value: 'on' },
+      { key: 'X-Frame-Options',           value: 'DENY' },
+      { key: 'X-Content-Type-Options',    value: 'nosniff' },
+      { key: 'Referrer-Policy',           value: 'strict-origin-when-cross-origin' },
+      { key: 'Permissions-Policy',        value: 'camera=(), microphone=(), geolocation=()' },
+    ]
 
-  if (!session) {
-    // Not logged in → redirect to login with return URL
-    const loginUrl = new URL('/auth/login', request.url)
-    loginUrl.searchParams.set('redirectTo', pathname)
-    return NextResponse.redirect(loginUrl)
-  }
+    return [
+      {
+        source: '/(.*)',
+        headers: securityHeaders,
+      },
+      {
+        source: '/_next/static/(.*)',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      {
+        source: '/api/(.*)',
+        headers: [{ key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' }],
+      },
+    ]
+  },
 
-  // 4. Role check — role is stored in JWT app_metadata (set by DB trigger)
-  const role = session.user.app_metadata?.role as string | undefined
+  // ── Redirects ────────────────────────────────────────────────────────────
+  async redirects() {
+    return [
+      { source: '/products/:slug', destination: '/product/:slug', permanent: true },
+      { source: '/stores/:slug',   destination: '/store/:slug',   permanent: true },
+    ]
+  },
 
-  if (rule.roles.length > 0 && (!role || !rule.roles.includes(role as any))) {
-    // Authenticated but wrong role
-    if (role === 'buyer' && pathname.startsWith('/dashboard')) {
-      // Buyer trying to access seller dashboard → offer to become seller
-      return NextResponse.redirect(new URL('/become-seller', request.url))
-    }
-    return NextResponse.redirect(new URL('/unauthorized', request.url))
-  }
+  // ── Compiler ─────────────────────────────────────────────────────────────
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production'
+      ? { exclude: ['error', 'warn'] }
+      : false,
+  },
 
-  // 5. i18n locale detection (injected into request headers for server components)
-  const acceptLang = request.headers.get('accept-language') ?? 'en'
-  const preferredLocale = detectLocale(acceptLang)
-  response.headers.set('x-degitale-locale', preferredLocale)
-
-  return response
 }
 
-// ─── Locale detection helper ───────────────────────────────────────────────
-const SUPPORTED_LOCALES = ['en', 'ar', 'fr'] as const
-type Locale = typeof SUPPORTED_LOCALES[number]
-
-function detectLocale(acceptLanguage: string): Locale {
-  // Parse "en-US,en;q=0.9,ar;q=0.8" → ['en', 'ar']
-  const preferred = acceptLanguage
-    .split(',')
-    .map(l => l.split(';')[0].trim().split('-')[0])
-
-  return (preferred.find(l => SUPPORTED_LOCALES.includes(l as Locale)) ?? 'en') as Locale
-}
-
-// ─── Matcher — skip static files & Next internals ─────────────────────────
-export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|icons|images|.*\\.(?:svg|png|jpg|webp|woff2)).*)',
-  ],
-}
+module.exports = nextConfig
