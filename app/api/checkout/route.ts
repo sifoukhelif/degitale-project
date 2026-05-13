@@ -1,113 +1,84 @@
-// app/api/checkout/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { createServerClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { sendOrderEmails } from '@/lib/email/sendOrderEmails'
 
-const PLATFORM_FEE_PERCENT = 20
-const DOWNLOAD_EXPIRY_HOURS = 48
-
+// 1. تهيئة Stripe بالإصدار الصحيح المتوافق مع المشروع
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-06-20',
 })
 
+const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET!
+
 export async function POST(req: NextRequest) {
+  // Stripe يحتاج قراءة الجسم الخام (Raw Body) للتحقق من التوقيع
+  const body = await req.text()
+  const signature = req.headers.get('stripe-signature') as string
+
+  let event: Stripe.Event
+
   try {
-    const { listingId, tierId } = await req.json()
-
-    if (!listingId) {
-      return NextResponse.json({ error: 'listingId is required' }, { status: 400 })
-    }
-
-    // 1. Auth — Async client for Next.js 16
-    const supabase = await createServerClient() 
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // 2. Fetch listing & seller account
-    const { data: listing, error: listErr } = await supabase
-      .from('listings')
-      .select(`
-        id, title, base_price, currency, thumbnail_url,
-        stores (
-          id, owner_id,
-          users:owner_id ( stripe_account_id )
-        ),
-        pricing_tiers ( id, name, price )
-      `)
-      .eq('id', listingId)
-      .eq('status', 'active')
-      .single()
-
-    if (listErr || !listing) {
-      return NextResponse.json({ error: 'Listing not found' }, { status: 404 })
-    }
-
-    const store = (listing.stores as any)
-    const sellerStripeId = store?.users?.stripe_account_id
-
-    if (!sellerStripeId) {
-      return NextResponse.json({ error: 'Seller Stripe account not found' }, { status: 422 })
-    }
-
-    // 3. Resolve Price
-    let unitAmount: number
-    let productName = listing.title
-
-    if (tierId && listing.pricing_tiers?.length) {
-      const tier = (listing.pricing_tiers as any[]).find(t => t.id === tierId)
-      if (!tier) return NextResponse.json({ error: 'Tier not found' }, { status: 404 })
-      unitAmount = Math.round(tier.price * 100)
-      productName = `${listing.title} — ${tier.name}`
-    } else {
-      unitAmount = Math.round((listing.base_price ?? 0) * 100)
-    }
-
-    const applicationFeeAmount = Math.round(unitAmount * (PLATFORM_FEE_PERCENT / 100))
-
-    // 4. Create Stripe Session
-    const origin = req.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL!
-    const successUrl = `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`
-    const cancelUrl = `${origin}/product/${listingId}`
-
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: (listing.currency ?? 'usd').toLowerCase(),
-            unit_amount: unitAmount,
-            product_data: {
-              name: productName,
-              images: listing.thumbnail_url ? [listing.thumbnail_url] : [],
-            },
-          },
-          quantity: 1,
-        },
-      ],
-      payment_intent_data: {
-        application_fee_amount: applicationFeeAmount,
-        transfer_data: { destination: sellerStripeId },
-      },
-      customer_email: user.email,
-      metadata: {
-        buyerId: user.id,
-        listingId: listingId,
-        storeId: store.id,
-        tierId: tierId ?? '',
-        downloadExpiryHours: String(DOWNLOAD_EXPIRY_HOURS),
-      },
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-    })
-
-    return NextResponse.json({ url: session.url })
-
+    // التحقق من أن الطلب قادم فعلياً من Stripe وليس طرفاً ثالثاً
+    event = stripe.webhooks.constructEvent(body, signature, WEBHOOK_SECRET)
   } catch (err: any) {
-    console.error('[/api/checkout] Error:', err)
-    return NextResponse.json({ error: err.message ?? 'Internal error' }, { status: 500 })
+    console.error(`[Webhook Error]: ${err.message}`)
+    return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 })
   }
+
+  // 2. معالجة الأحداث (Events)
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object as Stripe.Checkout.Session
+
+    // استخراج البيانات التي أرسلناها في الـ Metadata أثناء عملية الـ Checkout
+    const { buyerId, listingId, storeId, tierId, downloadExpiryHours } = session.metadata || {}
+
+    if (!buyerId || !listingId) {
+      return NextResponse.json({ error: 'Missing metadata' }, { status: 400 })
+    }
+
+    const supabase = createAdminClient()
+
+    try {
+      // أ) إنشاء سجل الطلب في قاعدة البيانات (Orders Table)
+      const { data: order, error: orderErr } = await supabase
+        .from('orders')
+        .insert({
+          buyer_id: buyerId,
+          listing_id: listingId,
+          store_id: storeId,
+          tier_id: tierId || null,
+          stripe_session_id: session.id,
+          amount_total: session.amount_total ? session.amount_total / 100 : 0,
+          status: 'completed'
+        })
+        .select()
+        .single()
+
+      if (orderErr) throw orderErr
+
+      // ب) تحديث إحصائيات المبيعات للمنتج والمتجر (RPC)
+      await supabase.rpc('increment_sales_count', { 
+        p_listing_id: listingId, 
+        p_store_id: storeId 
+      })
+
+      // ج) إرسال البريد الإلكتروني للمشتري (يحتوي على رابط التحميل الآمن)
+      // الدالة مستوردة من lib/email
+      await sendOrderEmails({
+        orderId: order.id,
+        buyerEmail: session.customer_details?.email || '',
+        productTitle: session.line_items?.data[0]?.description || 'Digital Product',
+        downloadExpiryHours: parseInt(downloadExpiryHours || '48')
+      })
+
+      console.log(`[Webhook Success]: Order ${order.id} processed for user ${buyerId}`)
+      
+    } catch (dbErr: any) {
+      console.error('[Webhook DB Error]:', dbErr.message)
+      return NextResponse.json({ error: 'Database update failed' }, { status: 500 })
+    }
+  }
+
+  // الرد على Stripe بنجاح لاستلام الإشعار
+  return NextResponse.json({ received: true }, { status: 200 })
 }
