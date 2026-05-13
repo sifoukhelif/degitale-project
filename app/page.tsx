@@ -66,4 +66,6 @@ export default async function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center w-full max-w-md">
-            <Link href="/shop" className="w-full sm:w-auto bg-[#C9A84C] text-[#0
+            <Link href="/shop" className="w-full sm:w-auto bg-[#C9A84C] text-[#08080E] px-14 py-4 rounded-full font-black text-lg hover:scale-105 transition-all text-center">
+  تصفح المنتجات
+</Link>
