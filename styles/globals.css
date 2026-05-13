@@ -4,8 +4,6 @@
    Responsive via fluid clamp() + container queries, not just breakpoints.
 */
 
-/* ── Google Fonts loaded via next/font/google in layout.tsx ─────────────── */
-
 /* ─── DESIGN TOKENS ─────────────────────────────────────────────────────── */
 :root {
   /* Brand palette */
@@ -19,251 +17,106 @@
   --color-gold-dim:    rgba(201, 168, 76, 0.12);
   --color-gold-border: rgba(201, 168, 76, 0.18);
 
-  --color-blue:        #4F8EF7;
-  --color-green:       #2ECC9A;
-  --color-red:         #E05A5A;
-
   --color-text:        #F0EDE6;
   --color-muted:       #7A7872;
   --color-muted-2:     #4A4842;
   --color-border:      rgba(240, 237, 230, 0.07);
 
-  /* Typography */
-  --font-display:  var(--font-display, 'Playfair Display', Georgia, serif);
-  --font-body:     var(--font-body, 'DM Sans', system-ui, sans-serif);
-  --font-mono:     'JetBrains Mono', 'Fira Code', monospace;
-
   /* Fluid type scale (clamp: min, preferred, max) */
-  --text-xs:   clamp(10px, 1.2vw, 11px);
-  --text-sm:   clamp(12px, 1.4vw, 13px);
-  --text-base: clamp(14px, 1.6vw, 15px);
-  --text-lg:   clamp(16px, 2vw, 18px);
-  --text-xl:   clamp(20px, 2.5vw, 24px);
-  --text-2xl:  clamp(26px, 3.5vw, 32px);
   --text-hero: clamp(36px, 6vw, 72px);
+  --text-2xl:  clamp(26px, 3.5vw, 32px);
+  --text-xl:   clamp(20px, 2.5vw, 24px);
+  --text-lg:   clamp(16px, 2vw, 18px);
+  --text-base: clamp(14px, 1.6vw, 15px);
+  --text-sm:   clamp(12px, 1.4vw, 13px);
+  --text-xs:   clamp(10px, 1.2vw, 11px);
 
-  /* Spacing — 4px grid */
-  --space-1:  4px;
-  --space-2:  8px;
-  --space-3:  12px;
+  /* Spacing */
   --space-4:  16px;
-  --space-5:  20px;
   --space-6:  24px;
-  --space-8:  32px;
   --space-10: 40px;
-  --space-12: 48px;
-  --space-16: 64px;
 
-  /* Radii */
-  --radius-sm:  6px;
-  --radius-md:  10px;
-  --radius-lg:  14px;
   --radius-xl:  20px;
-  --radius-full: 9999px;
-
-  /* Layout */
-  --sidebar-width:    220px;
-  --topbar-height:    56px;
-  --bottom-nav-height: 60px;
-  --container-max:    1280px;
-  --content-max:      860px;
-
-  /* Transitions */
-  --ease-out:  cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in:   cubic-bezier(0.7, 0, 0.84, 0);
+  --container-max: 1280px;
   --duration:  200ms;
+  --ease-out:  cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ─── RESET & BASE ───────────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
 
 html {
   scroll-behavior: smooth;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden; /* لمنع الاهتزاز الأفقي */
 }
 
 body {
-  font-family: var(--font-body);
+  font-family: var(--font-body, 'Cairo', sans-serif); /* Cairo كخيار أساسي للعربية */
   font-size: var(--text-base);
   line-height: 1.65;
   background: var(--color-bg);
   color: var(--color-text);
-  min-height: 100dvh;        /* dynamic viewport — handles mobile browser chrome */
-  overflow-x: hidden;
-}
-
-/* RTL global flip — dir="rtl" on <html> flips logical properties */
-[dir="rtl"] {
-  --sidebar-side: right;
-}
-[dir="ltr"] {
-  --sidebar-side: left;
-}
-
-/* ─── TYPOGRAPHY ─────────────────────────────────────────────────────────── */
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-display);
-  font-weight: 700;
-  line-height: 1.15;
-  color: var(--color-text);
-}
-
-h1 { font-size: var(--text-hero); }
-h2 { font-size: var(--text-2xl); }
-h3 { font-size: var(--text-xl); }
-h4 { font-size: var(--text-lg); font-family: var(--font-body); font-weight: 600; }
-
-p { line-height: 1.7; }
-
-a {
-  color: inherit;
-  text-decoration: none;
-  transition: color var(--duration) var(--ease-out);
-}
-
-/* ─── DASHBOARD SHELL ────────────────────────────────────────────────────── */
-.dashboard-shell {
-  display: grid;
-  grid-template-columns: var(--sidebar-width) 1fr;
-  grid-template-rows: 1fr;
   min-height: 100dvh;
+  overflow-x: hidden;
+  direction: rtl; /* تأكيد الاتجاه العربي */
 }
 
-.dashboard-main {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;        /* prevent grid blowout */
-  overflow: hidden;
-}
+/* ─── LAYOUT UTILITIES (إصلاحات مضافة) ──────────────────────────────────── */
 
-.dashboard-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--space-6);
-  scroll-padding-top: var(--space-4);
-}
-
-/* ─── DASHBOARD LAYOUT — MOBILE ─────────────────────────────────────────── */
-@media (max-width: 768px) {
-  .dashboard-shell {
-    grid-template-columns: 1fr;  /* sidebar slides in as overlay */
-    grid-template-rows: auto 1fr auto;
-  }
-
-  .dashboard-content {
-    padding: var(--space-4);
-    padding-bottom: calc(var(--bottom-nav-height) + var(--space-4));
-  }
-}
-
-/* ─── AD SLOTS ───────────────────────────────────────────────────────────── */
-.ad-slot {
-  position: relative;
-  border: 1px dashed var(--color-gold-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4) var(--space-5);
-  overflow: hidden;
-  background: transparent;
-}
-
-/* Subtle shimmer on platform ads */
-.ad-slot--platform::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(201, 168, 76, 0.03) 0%,
-    transparent 60%
-  );
-  pointer-events: none;
-}
-
-.ad-platform {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-}
-
-.ad-badge {
-  font-size: 9px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--color-gold);
-  border: 1px solid var(--color-gold-border);
-  border-radius: var(--radius-sm);
-  padding: 2px 7px;
-  flex-shrink: 0;
-  font-weight: 600;
-}
-
-.ad-body { flex: 1; min-width: 0; }
-.ad-headline { font-size: var(--text-sm); font-weight: 600; margin-bottom: 2px; }
-.ad-sub { font-size: 11px; color: var(--color-muted); }
-
-.ad-cta {
-  flex-shrink: 0;
-  background: var(--color-gold);
-  color: #08080E;
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: 7px 14px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: var(--font-body);
-  transition: background var(--duration) var(--ease-out);
-  white-space: nowrap;
-}
-.ad-cta:hover { background: var(--color-gold-hover); }
-
-/* ─── RESPONSIVE UTILITIES ───────────────────────────────────────────────── */
-
-/* Hide/show helpers — mobile-first */
-.hide-mobile  { display: none; }
-.hide-desktop { display: block; }
-
-@media (min-width: 769px) {
-  .hide-mobile  { display: block; }   /* or flex/grid per context */
-  .hide-desktop { display: none; }
-}
-
-/* Container */
 .container {
   width: 100%;
   max-width: var(--container-max);
   margin-inline: auto;
-  padding-inline: var(--space-4);
+  padding-inline: var(--space-6);
+  display: flex;
+  flex-direction: column;
 }
 
-@media (min-width: 640px)  { .container { padding-inline: var(--space-6); } }
-@media (min-width: 1024px) { .container { padding-inline: var(--space-8); } }
-
-/* Grid helpers */
-.grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-4); }
-.grid-2    { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4); }
-.grid-4    { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); }
-
-@media (max-width: 767px) {
-  .grid-2 { grid-template-columns: 1fr; }
-  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+/* فئة مخصصة لحل مشكلة التصاق الروابط */
+.nav-gap {
+  display: flex;
+  gap: var(--space-10); /* تباعد 40px بين الروابط */
+  align-items: center;
 }
 
-/* ─── FOCUS RING (accessibility) ─────────────────────────────────────────── */
-:focus-visible {
-  outline: 2px solid var(--color-gold);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
+.flex-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
-/* ─── SCROLLBAR (webkit) ─────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: var(--radius-full); }
-::-webkit-scrollbar-thumb:hover { background: var(--color-muted-2); }
+/* ─── TYPOGRAPHY ─────────────────────────────────────────────────────────── */
+h1, h2, h3, h4 {
+  font-family: var(--font-display, 'Playfair Display', serif);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+h1 { font-size: var(--text-hero); }
+h2 { font-size: var(--text-2xl); }
+
+/* ─── SCROLLBAR (إضافة لمسة جمالية) ─────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-bg); }
+::-webkit-scrollbar-thumb { 
+  background: var(--color-gold-dim); 
+  border-radius: 10px; 
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-gold); }
 
 /* ─── SELECTION ──────────────────────────────────────────────────────────── */
-::selection { background: var(--color-gold-dim); color: var(--color-text); }
+::selection { background: var(--color-gold); color: #000; }
+
+/* 📱 تحسينات الموبايل */
+@media (max-width: 768px) {
+  .nav-gap { gap: var(--space-4); } /* تقليل التباعد في الجوال */
+  .container { padding-inline: var(--space-4); }
+}
