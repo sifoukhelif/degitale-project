@@ -5,7 +5,7 @@ import { I18nProvider } from '../components/providers/I18nProvider'
 import { Toaster } from '../components/Toaster'
 import '@/styles/globals.css'
 
-// 1. تعريف الخطوط وتحديد المتغيرات (CSS Variables)
+// 1. تعريف الخطوط بشكل صحيح لضمان عدم وجود ReferenceError
 const playfair = Playfair_Display({
   subsets: ['latin'],
   variable: '--font-display',
@@ -23,8 +23,8 @@ const cairo = Cairo({
 })
 
 export const metadata = {
-  title: 'DEGITALE | سوق المنتجات الرقمية الحصرية',
-  description: 'منصة لبيع وشراء الأصول الرقمية، القوالب، والحلول البرمجية.',
+  title: 'DEGITALE | سوق الأصول الرقمية',
+  description: 'منصة حصرية لبيع وشراء المنتجات الرقمية المتطورة',
 }
 
 export default function RootLayout({
@@ -33,7 +33,6 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    // ضبط اللغة والاتجاه ومنع التمرير الأفقي في مستوى الـ HTML
     <html 
       lang="ar" 
       dir="rtl" 
@@ -57,12 +56,11 @@ export default function RootLayout({
         >
           <SupabaseProvider>
             <I18nProvider>
-              {/* محتوى الصفحة الرئيسي */}
+              {/* الحاوية الرئيسية لضمان توزيع العناصر */}
               <div className="relative flex flex-col min-h-screen w-full">
                 {children}
               </div>
               
-              {/* نظام التنبيهات */}
               <Toaster />
             </I18nProvider>
           </SupabaseProvider>
