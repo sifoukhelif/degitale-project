@@ -66,9 +66,7 @@ export async function POST(req: NextRequest) {
       // الدالة مستوردة من lib/email
       await sendOrderEmails({
         orderId: order.id,
-        buyerEmail: session.customer_details?.email || '',
-        productTitle: session.line_items?.data[0]?.description || 'Digital Product',
-        downloadExpiryHours: parseInt(downloadExpiryHours || '48')
+        email: session.customer_details?.email || '',
       })
 
       console.log(`[Webhook Success]: Order ${order.id} processed for user ${buyerId}`)
